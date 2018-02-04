@@ -26,8 +26,13 @@ import java.security.cert.X509Certificate;
 
 public class MultipPartFormDataRequestCreaterClientRunner {
 
+    private Logger LOGGER = LoggerFactory.getLogger(MultipPartFormDataRequestCreaterClientRunner.class);
+
     @Value("${img.importurl}")
     String solrImportUrl;
+
+    @Value("${img.import.path}")
+    private String imgImportPath;
 
     private CloseableHttpClient httpClient;
 
@@ -93,6 +98,20 @@ public class MultipPartFormDataRequestCreaterClientRunner {
 
 
     public void postMultiFormDataToLocalhost() {
+
+        List<String> successfullImports = new ArrayList<>();
+        List<String> failedImports = new ArrayList<>();
+
+
+        LOGGER.info("Parallely sending  images to  image-import-service = " + solrImportUrl);
+        LOGGER.info("Import directory = " + imgImportPath);
+
+
+        List<File> imagesInFolder = Files.walk(Paths.get(imgImportPath))
+                .filter(Files::isRegularFile)
+                .map(Path::toFile)
+                .filter(file -> file.getName().endsWith(".png"))
+                .collect(Collectors.toList());
 
 
     }
