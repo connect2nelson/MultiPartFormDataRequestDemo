@@ -13,16 +13,26 @@ import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.impl.client.cache.ExponentialBackOffSchedulingStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MultipPartFormDataRequestCreaterClientRunner {
 
@@ -97,7 +107,7 @@ public class MultipPartFormDataRequestCreaterClientRunner {
     }
 
 
-    public void postMultiFormDataToLocalhost() {
+    public void postMultiFormDataToLocalhost() throws IOException {
 
         List<String> successfullImports = new ArrayList<>();
         List<String> failedImports = new ArrayList<>();
@@ -112,6 +122,7 @@ public class MultipPartFormDataRequestCreaterClientRunner {
                 .map(Path::toFile)
                 .filter(file -> file.getName().endsWith(".png"))
                 .collect(Collectors.toList());
+
 
 
     }
