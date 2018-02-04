@@ -1,11 +1,17 @@
 package fun.abm.com.MultiPartFormDataRequestCreaterClient;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CacheConfig;
@@ -42,7 +48,7 @@ public class MultipPartFormDataRequestCreaterClientRunner {
     private Logger LOGGER = LoggerFactory.getLogger(MultipPartFormDataRequestCreaterClientRunner.class);
 
     @Value("${img.importurl}")
-    String solrImportUrl;
+    String imgImportUrl;
 
     @Value("${img.import.path}")
     private String imgImportPath;
@@ -116,7 +122,7 @@ public class MultipPartFormDataRequestCreaterClientRunner {
         List<String> failedImports = new ArrayList<>();
 
 
-        LOGGER.info("Parallely sending  images to  image-import-service = " + solrImportUrl);
+        LOGGER.info("Parallely sending  images to  image-import-service = " + imgImportUrl);
         LOGGER.info("Import directory = " + imgImportPath);
 
 
@@ -129,5 +135,62 @@ public class MultipPartFormDataRequestCreaterClientRunner {
 
         LOGGER.info("No of files to be imported :" + imagesInFolder.size());
 
+
+        imagesInFolder.stream().parallel()
+                .forEach(file -> {
+
+                    int count = 0;
+                    //
+                    //While loop for retrying...
+                    //
+                    while (true) {
+                        try {
+                            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+                            builder.addBinaryBody(
+                                    "zipData",
+                                    file,
+                                    ContentType.APPLICATION_OCTET_STREAM,
+                                    file.getAbsolutePath()
+                            );
+
+                            HttpEntity multipart = builder.build();
+                            HttpPost uploadFile = new HttpPost(imgImportUrl + "/img-import");
+                            uploadFile.setEntity(multipart);
+
+                            CloseableHttpResponse httpResponse = getHttpClient().execute(uploadFile);
+                            HttpEntity responseEntity = httpResponse.getEntity();
+//                            String outputFromHttpEntity = getOutputFromHttpEntity(httpResponse, responseEntity);
+
+                            if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                                LOGGER.info("Img import task is successful for file : " + file.getName() );
+                                break;
+                            } else {
+                                LOGGER.warn("Img import task has FAILED for file : " + file.getName() );
+                                if (shouldRetryBeAttempted(++count)){
+                                    continue;
+                                }
+                                else{
+                                    break;
+                                }
+                            }
+                        } catch (IOException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                            LOGGER.error("Img import task has TERMINATED for file :" + file.getName() + " due to exception : \r\n" + e.getMessage());
+                            if (shouldRetryBeAttempted(++count)){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                    }
+                });
+    }
+
+    private boolean shouldRetryBeAttempted(int attemptNo) {
+        int maxTries = 4;
+
+        if (attemptNo <= maxTries) return true;
+        else return false;
     }
 }
