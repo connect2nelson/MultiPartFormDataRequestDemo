@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+@Component
 public class MultipPartFormDataRequestCreaterClientRunner {
 
     private Logger LOGGER = LoggerFactory.getLogger(MultipPartFormDataRequestCreaterClientRunner.class);
@@ -124,6 +127,7 @@ public class MultipPartFormDataRequestCreaterClientRunner {
                 .collect(Collectors.toList());
 
 
+        LOGGER.info("No of files to be imported :" + imagesInFolder.size());
 
     }
 }
